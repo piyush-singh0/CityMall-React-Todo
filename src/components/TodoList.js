@@ -1,0 +1,90 @@
+import { calculateNewValue } from '@testing-library/user-event/dist/utils';
+import React, {useState} from 'react';
+import Todo from './Todo';
+import TodoForm from './TodoForm';
+import firebase from 'firebase/compat/app'
+import 'firebase/compat/firestore'
+import { updateDoc } from "firebase/firestore";
+import axios from 'axios'
+
+firebase.initializeApp({
+  apiKey: "AIzaSyDH7QSQWRcY0WBdYfsEd1vnTkhJkGB_gpg",
+  authDomain: "react-app-45ca7.firebaseapp.com",
+  projectId: "react-app-45ca7",
+  storageBucket: "react-app-45ca7.appspot.com",
+  messagingSenderId: "382610521698",
+  appId: "1:382610521698:web:2db4d7bfb567a09062db3b"
+})
+
+
+const useGetData = () => {
+  const [documents, setDocuments] = React.useState([]);
+  const db = firebase.firestore();
+  React.useEffect(() => {
+    db.collection("todos")
+      .get()
+      .then((querySnapshot) => {
+        let arr = [];
+        querySnapshot.docs.map((doc) =>
+          arr.push({ id: doc.id, value: doc.data() })
+        );
+        setDocuments(arr);
+      });
+  }, [db]);
+  return [documents];
+};
+
+
+
+
+function TodoList() {
+  const [documents] = useGetData()
+  const [todos, setTodos] = useState([]);
+  console.log(todos)
+    const addTodo = todo =>{
+      if (!todo.text || /^\*&/.test(todo.text)){
+        return;
+      }
+      const newTodos = [todo, ...todos];
+
+      setTodos(newTodos);
+      //console.log(...todos);
+    };
+    
+    const updateTodo = (todoId, newValue) => {
+      if (!newValue.text || /^\*&/.test(newValue.text)){
+        return;
+      }
+      setTodos(prev => prev.map(item => (item.id === todoId ? newValue : item)));
+    };
+
+    const removeTodo = id =>{
+      const removeArr = [...todos].filter(todo=> todo.id !== id);
+      setTodos(removeArr);
+    };
+
+
+    const completeTodo = id =>{
+      let updatedTodos = todos.map(todo=>{
+        if (todo.id === id){
+          todo.isComplete = !todo.isComplete;
+        }
+        return todo;
+      });
+      setTodos(updatedTodos);
+    };
+
+  return (
+  <div>
+      <h1>Agenda for today at Citymall</h1>
+      <TodoForm onSubmit = {addTodo} />
+      <Todo todos = {todos} 
+      completeTodo={completeTodo} 
+      removeTodo = {removeTodo}
+      updateTodo = {updateTodo} 
+      />
+  </div>
+  );
+}
+
+export default TodoList;
